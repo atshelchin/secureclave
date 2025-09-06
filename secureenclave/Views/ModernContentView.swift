@@ -75,7 +75,7 @@ struct SystemInfoView: View {
                 
                 Section("App Configuration") {
                     InfoRow(label: "Bundle ID", value: Bundle.main.bundleIdentifier ?? "Unknown")
-                    InfoRow(label: "Team ID", value: "9RS8E64FWL")
+                    InfoRow(label: "Team ID", value: "F9W689P9NE")
                     InfoRow(label: "Domain", value: "atshelchin.github.io")
                 }
             }
