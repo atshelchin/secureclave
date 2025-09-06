@@ -1,0 +1,16 @@
+{
+  "name": "secureenclave",
+  "version": "1.0.0",
+  "description": "一个用于调试和测试iOS Secure Enclave、Passkeys和iCloud SwiftData同步功能的应用。",
+  "main": "verify-passkey.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ox": "^0.9.5",
+    "viem": "^2.37.3"
+  }
+}

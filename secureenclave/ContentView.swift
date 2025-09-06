@@ -10,52 +10,123 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query private var keychainItems: [KeychainItem]
 
     var body: some View {
-        NavigationSplitView {
+        NavigationView {
             List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                Section("Security Features") {
+                    NavigationLink(destination: SecureEnclaveTestView()) {
+                        Label("Secure Enclave", systemImage: "lock.circle.fill")
+                    }
+                    
+                    NavigationLink(destination: PasskeysTestView()) {
+                        Label("Passkeys", systemImage: "person.badge.key.fill")
+                    }
+                    
+                    NavigationLink(destination: CloudSyncDebugView()) {
+                        Label("iCloud Sync Debug", systemImage: "icloud.circle.fill")
                     }
                 }
-                .onDelete(perform: deleteItems)
+                
+                Section("Recent Keys (\(keychainItems.count))") {
+                    ForEach(keychainItems.prefix(5)) { item in
+                        HStack {
+                            Image(systemName: iconForKeyType(item.keyType))
+                                .foregroundColor(colorForKeyType(item.keyType))
+                            
+                            VStack(alignment: .leading) {
+                                Text(item.label)
+                                    .font(.subheadline)
+                                Text(item.keyTag)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            if item.isHardwareBacked {
+                                Image(systemName: "lock.shield.fill")
+                                    .foregroundColor(.green)
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteItems)
+                }
+                
+                Section("Debug Info") {
+                    HStack {
+                        Text("Total Keys")
+                        Spacer()
+                        Text("\(keychainItems.count)")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Text("SE Keys")
+                        Spacer()
+                        Text("\(keychainItems.filter { $0.keyType == .secureEnclaveKey }.count)")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack {
+                        Text("Passkeys")
+                        Spacer()
+                        Text("\(keychainItems.filter { $0.keyType == .passkey }.count)")
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
+            .navigationTitle("Secure Enclave Debug")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    Button(action: clearAllData) {
+                        Image(systemName: "trash")
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
         }
     }
 
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
-                modelContext.delete(items[index])
+                modelContext.delete(keychainItems[index])
             }
+        }
+    }
+    
+    private func clearAllData() {
+        for item in keychainItems {
+            modelContext.delete(item)
+        }
+    }
+    
+    private func iconForKeyType(_ type: KeyType) -> String {
+        switch type {
+        case .secureEnclaveKey:
+            return "lock.circle"
+        case .passkey:
+            return "person.badge.key"
+        case .regularKey:
+            return "key"
+        }
+    }
+    
+    private func colorForKeyType(_ type: KeyType) -> Color {
+        switch type {
+        case .secureEnclaveKey:
+            return .green
+        case .passkey:
+            return .purple
+        case .regularKey:
+            return .orange
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: KeychainItem.self, inMemory: true)
 }

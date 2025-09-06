@@ -10,23 +10,42 @@ import SwiftData
 
 @main
 struct secureenclaveApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+    let modelContainer: ModelContainer
+    
+    init() {
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            // Simple local-only container first to avoid blocking
+            let schema = Schema([
+                KeychainItem.self,
+                OperationLog.self,
+            ])
+            
+            let modelConfiguration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                cloudKitDatabase: .none  // Disable CloudKit for now
+            )
+            
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            print("Failed to create ModelContainer: \(error)")
+            // Create in-memory container as last resort
+            let schema = Schema([
+                KeychainItem.self,
+                OperationLog.self,
+            ])
+            let modelConfiguration = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: true
+            )
+            modelContainer = try! ModelContainer(for: schema, configurations: [modelConfiguration])
         }
-    }()
+    }
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ModernContentView()
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(modelContainer)
     }
 }
